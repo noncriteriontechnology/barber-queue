@@ -1,0 +1,92 @@
+
+BarberQueue App – Windsurf AI Prompts
+=====================================
+
+1. Flutter App Setup (Project Bootstrap)
+----------------------------------------
+Create a Flutter application named "BarberQueue" that supports both Android and iOS. Set up the project with Material 3 design, a light modern theme, and navigation using named routes. Use a scalable folder structure with screens, services, models, and widgets folders.
+
+2. Firebase Authentication (Login + Splash)
+-------------------------------------------
+Integrate Firebase Authentication using email and password in the "BarberQueue" Flutter app. Create a splash screen that checks Firebase login status and navigates to login or dashboard. Provide a simple login screen with email, password, and login button. Use firebase_auth and firebase_core packages.
+
+3. OneSignal Push Notification Integration
+------------------------------------------
+Integrate OneSignal in the Flutter app "BarberQueue" to send and receive push notifications. Use the onesignal_flutter plugin. Initialize OneSignal on app start, and create a service class for notification handling. Enable basic notifications when a new walk-in customer is added.
+
+4. Queue Management UI + Local SQLite
+-------------------------------------
+Create a queue management screen in Flutter for "BarberQueue". Use SQLite for local storage using sqflite plugin. Show a list of customers in the queue with:
+- Name
+- Service
+- Status (Waiting, Started, Completed)
+
+Allow actions:
+- Add new walk-in (navigate to Add Walk-in screen)
+- Start service
+- Complete service
+- Cancel entry
+
+Use a mobile-friendly UI with cards, large touch areas, and status indicators.
+
+5. Add Walk-in Customer Screen (Form + Save to SQLite)
+-------------------------------------------------------
+Create a form screen in Flutter to add a walk-in customer. Fields:
+- Customer name (text)
+- Phone number (optional)
+- Service type (dropdown)
+- Notes (optional)
+
+Save the entry to a local SQLite queue table. Navigate back to Queue screen on success. Validate inputs and show snackbar on success/failure.
+
+6. Appointments Screen (Calendar + Booking)
+-------------------------------------------
+Create an Appointments screen with a calendar view using table_calendar Flutter plugin. List upcoming appointments with date, time, customer, and assigned barber. Provide a form to add a new appointment (customer name, date/time picker, service, and barber dropdown). Save data locally using SQLite.
+
+7. Customer Management (CRUD + History)
+---------------------------------------
+Create a Customer Management screen in Flutter. Show a list of customers with name, phone, and number of visits. Allow search, add, edit, and delete operations. Store data in a local SQLite table named 'customers'. Also track visit history to show on long press.
+
+8. Barber Management Screen
+---------------------------
+Create a screen to manage barbers. List all barbers with their name and status (Available, On Break). Provide buttons to add or update barber info. Save and update data using SQLite.
+
+9. Settings Screen + Sync Button (Offline Support)
+--------------------------------------------------
+Create a Settings screen with the following options:
+- Define Services (CRUD operations for haircut, shave, etc.)
+- Add working hours
+- Sync now button (visible if online)
+- Toggle theme light/dark
+- Logout button
+
+All settings should be stored locally in SQLite, and later synced with backend.
+
+10. SQLite Helper Class + Table Schema
+--------------------------------------
+Create a SQLite helper class in Flutter to manage all local database operations. Tables needed:
+- customers(id, name, phone, visits)
+- barbers(id, name, status)
+- services(id, name, duration)
+- appointments(id, customer_id, service_id, barber_id, datetime)
+- queue(id, customer_id, service_id, status, timestamp)
+- sync_log(table_name, record_id, action, synced)
+
+Use sqflite and path_provider packages.
+
+11. Folder Structure Prompt
+---------------------------
+Use the following folder structure for the BarberQueue Flutter app:
+- /lib/screens: all UI screens
+- /lib/services: database, auth, notification services
+- /lib/models: all data models (Customer, Barber, Appointment, etc.)
+- /lib/widgets: reusable UI widgets
+- /lib/utils: constants and theme config
+
+12. Optional Future Prompt: Sync with Node.js
+---------------------------------------------
+Create a background sync service in Flutter that runs when online. It reads unsynced data from the sync_log table and calls REST APIs to sync data with Node.js backend. On success, mark those rows as synced. Use connectivity_plus to detect online status.
+
+13. Optional Prompt to Package + Test
+-------------------------------------
+Build and test the complete "BarberQueue" Flutter app for Android and iOS. Ensure offline functionality with SQLite and Firebase Auth work as expected. Push notification should arrive when a new customer is added to the queue.
