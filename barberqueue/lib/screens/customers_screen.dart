@@ -18,7 +18,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
   List<Customer> _customers = [];
   List<Customer> _filteredCustomers = [];
   bool _isLoading = true;
-
+  
   @override
   void initState() {
     super.initState();
@@ -412,6 +412,41 @@ class _CustomersScreenState extends State<CustomersScreen> {
     super.dispose();
   }
 
+  Widget _buildCustomerCard(Customer customer) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: Theme.of(context).primaryColor,
+          child: Text(
+            customer.name.isNotEmpty ? customer.name[0].toUpperCase() : '?',
+            style: const TextStyle(color: Colors.white),
+          ),
+        ),
+        title: Text(
+          customer.name,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: customer.phone != null && customer.phone!.isNotEmpty
+            ? Text(customer.phone!)
+            : null,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.edit, size: 20),
+              onPressed: () => _showEditCustomerDialog(customer),
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+              onPressed: () => _showDeleteConfirmationDialog(customer),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -428,11 +463,30 @@ class _CustomersScreenState extends State<CustomersScreen> {
             onPressed: _showAddCustomerDialog,
             tooltip: 'Add Customer',
           ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Search Bar
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search customers...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
                           _searchController.clear();
                           _filterCustomers('');
                         },
                       )
                     : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               onChanged: _filterCustomers,
             ),

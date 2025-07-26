@@ -6,6 +6,7 @@ import 'appointments_screen.dart';
 import 'customers_screen.dart';
 import 'admin/barber_roster_screen.dart';
 import 'settings_screen.dart';
+import 'reports_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -16,15 +17,29 @@ class AdminDashboard extends StatefulWidget {
 
 class _AdminDashboardState extends State<AdminDashboard> {
   int _selectedIndex = 0;
+  final GlobalKey<_AdminHomeScreenState> _homeScreenKey = GlobalKey();
   
-  final List<Widget> _screens = [
-    const _AdminHomeScreen(),
-    const QueueScreen(),
-    const AppointmentsScreen(),
-    const CustomersScreen(),
-    const BarberRosterScreen(),
-    const SettingsScreen(),
-  ];
+  final List<Widget> _screens = [];
+  
+  @override
+  void initState() {
+    super.initState();
+    _screens.addAll([
+      _AdminHomeScreen(key: _homeScreenKey, onNavigate: _onItemTapped),
+      const QueueScreen(),
+      const AppointmentsScreen(),
+      const CustomersScreen(),
+      const BarberRosterScreen(),
+      const SettingsScreen(),
+      const ReportsScreen(),
+    ]);
+  }
+  
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,11 +48,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
+        onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.dashboard),
@@ -69,8 +80,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 }
 
-class _AdminHomeScreen extends StatelessWidget {
-  const _AdminHomeScreen();
+class _AdminHomeScreen extends StatefulWidget {
+  final Function(int) onNavigate;
+  
+  const _AdminHomeScreen({super.key, required this.onNavigate});
+  
+  @override
+  State<_AdminHomeScreen> createState() => _AdminHomeScreenState();
+}
+
+class _AdminHomeScreenState extends State<_AdminHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
@@ -319,8 +338,8 @@ class _AdminHomeScreen extends StatelessWidget {
   }
 
   void _navigateToTab(int index) {
-    // This would be handled by the parent widget
-    // For now, we'll just show a message
+    // Use the callback to navigate
+    widget.onNavigate(index);
   }
 
   void _showComingSoon(BuildContext context) {

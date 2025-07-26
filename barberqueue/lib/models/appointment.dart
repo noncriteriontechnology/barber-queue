@@ -7,6 +7,7 @@ class Appointment {
   final String status;
   final String? notes;
   final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   Appointment({
     this.id,
@@ -17,6 +18,7 @@ class Appointment {
     this.status = 'Scheduled',
     this.notes,
     this.createdAt,
+    this.updatedAt,
   });
 
   Map<String, dynamic> toMap() {
@@ -29,6 +31,7 @@ class Appointment {
       'status': status,
       'notes': notes,
       'created_at': createdAt?.toIso8601String(),
+      'updated_at': updatedAt?.toIso8601String(),
     };
   }
 
@@ -44,6 +47,9 @@ class Appointment {
       createdAt: map['created_at'] != null 
           ? DateTime.parse(map['created_at']) 
           : null,
+      updatedAt: map['updated_at'] != null
+          ? DateTime.parse(map['updated_at'])
+          : null,
     );
   }
 
@@ -56,6 +62,7 @@ class Appointment {
     String? status,
     String? notes,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return Appointment(
       id: id ?? this.id,
@@ -66,6 +73,7 @@ class Appointment {
       status: status ?? this.status,
       notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
