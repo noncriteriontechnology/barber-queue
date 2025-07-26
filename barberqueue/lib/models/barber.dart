@@ -2,6 +2,7 @@ class Barber {
   final int? id;
   final String name;
   final String status;
+  final int? userId; // Reference to the user account
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -9,6 +10,7 @@ class Barber {
     this.id,
     required this.name,
     required this.status,
+    this.userId,
     this.createdAt,
     this.updatedAt,
   });
@@ -18,6 +20,7 @@ class Barber {
       'id': id,
       'name': name,
       'status': status,
+      'user_id': userId,
       'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
     };
@@ -28,6 +31,7 @@ class Barber {
       id: map['id'],
       name: map['name'],
       status: map['status'],
+      userId: map['user_id'],
       createdAt: map['created_at'] != null 
           ? DateTime.parse(map['created_at']) 
           : null,
@@ -41,6 +45,7 @@ class Barber {
     int? id,
     String? name,
     String? status,
+    int? userId,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -48,6 +53,7 @@ class Barber {
       id: id ?? this.id,
       name: name ?? this.name,
       status: status ?? this.status,
+      userId: userId ?? this.userId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

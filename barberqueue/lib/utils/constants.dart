@@ -48,7 +48,33 @@ class AppConstants {
   ];
   
   // Sync Actions
-  static const String syncActionInsert = 'INSERT';
-  static const String syncActionUpdate = 'UPDATE';
-  static const String syncActionDelete = 'DELETE';
+  static const String syncCreated = 'created';
+  static const String syncUpdated = 'updated';
+  static const String syncDeleted = 'deleted';
+  
+  // Validation
+  static final RegExp emailRegex = RegExp(
+    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+    caseSensitive: false,
+    multiLine: false,
+  );
+  
+  // Default password for demo accounts
+  static const String defaultAdminPassword = 'admin123';
+  static const String defaultBarberPassword = 'barber123';
+  static const String defaultCustomerPassword = 'customer123';
+  
+  // User Roles
+  static const String roleAdmin = 'admin';
+  static const String roleBarber = 'barber';
+  static const String roleCustomer = 'customer';
+  
+  // Barber Specializations
+  static const List<String> barberSpecializations = [
+    'Hair Stylist',
+    'Beard Specialist',
+    'Master Barber',
+    'Color Specialist',
+    'Stylist',
+  ];
 }

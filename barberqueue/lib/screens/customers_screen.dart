@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/storage_service.dart';
 import '../models/customer.dart';
 import '../utils/constants.dart';
@@ -25,20 +26,26 @@ class _CustomersScreenState extends State<CustomersScreen> {
   }
 
   Future<void> _loadCustomers() async {
-    setState(() => _isLoading = true);
+    if (mounted) {
+      setState(() => _isLoading = true);
+    }
     
     try {
       final customers = await _storageService.getCustomers();
-      setState(() {
-        _customers = customers;
-        _filteredCustomers = customers;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _customers = customers;
+          _filteredCustomers = customers;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading customers: $e')),
-      );
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error loading customers. Please try again.')),
+        );
+      }
     }
   }
 
@@ -56,6 +63,73 @@ class _CustomersScreenState extends State<CustomersScreen> {
     });
   }
 
+  Future<void> _addCustomer(String name, String? phone) async {
+    try {
+      final customer = Customer(
+        name: name.trim(),
+        phone: phone?.trim().isEmpty ?? true ? null : phone!.trim(),
+        visits: 0,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+      
+      await _storageService.insertCustomer(customer);
+      await _loadCustomers();
+      
+      if (mounted) {
+        Navigator.pop(context); // Close dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Customer added successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to add customer. Please try again.')),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateCustomer(Customer customer) async {
+    try {
+      await _storageService.updateCustomer(customer);
+      await _loadCustomers();
+      
+      if (mounted) {
+        Navigator.pop(context); // Close dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Customer updated successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update customer. Please try again.')),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteCustomer(int customerId) async {
+    try {
+      await _storageService.deleteCustomer(customerId);
+      await _loadCustomers();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Customer deleted successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to delete customer. Please try again.')),
+        );
+      }
+    }
+  }
+
   void _showAddCustomerDialog() {
     final nameController = TextEditingController();
     final phoneController = TextEditingController();
@@ -67,32 +141,41 @@ class _CustomersScreenState extends State<CustomersScreen> {
         title: const Text('Add Customer'),
         content: Form(
           key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Customer Name *',
-                  prefixIcon: Icon(Icons.person),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Customer Name *',
+                    prefixIcon: Icon(Icons.person),
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter customer name';
+                    }
+                    return null;
+                  },
+                  autofocus: true,
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter customer name';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: phoneController,
-                decoration: const InputDecoration(
-                  labelText: 'Phone Number (Optional)',
-                  prefixIcon: Icon(Icons.phone),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: phoneController,
+                  decoration: const InputDecoration(
+                    labelText: 'Phone Number (Optional)',
+                    prefixIcon: Icon(Icons.phone),
+                    border: OutlineInputBorder(),
+                    hintText: 'e.g., +1234567890',
+                  ),
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    // You can add phone number formatting here if needed
+                  ],
                 ),
-                keyboardType: TextInputType.phone,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         actions: [
@@ -100,32 +183,13 @@ class _CustomersScreenState extends State<CustomersScreen> {
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
-          ElevatedButton(
+          TextButton(
             onPressed: () async {
               if (formKey.currentState!.validate()) {
-                try {
-                  final customer = Customer(
-                    name: nameController.text.trim(),
-                    phone: phoneController.text.trim().isEmpty 
-                        ? null 
-                        : phoneController.text.trim(),
-                    visits: 0,
-                    createdAt: DateTime.now(),
-                    updatedAt: DateTime.now(),
-                  );
-                  
-                  await _storageService.insertCustomer(customer);
-                  Navigator.pop(context);
-                  _loadCustomers();
-                  
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Customer added successfully!')),
-                  );
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error adding customer: $e')),
-                  );
-                }
+                await _addCustomer(
+                  nameController.text,
+                  phoneController.text,
+                );
               }
             },
             child: const Text('Add'),
@@ -146,32 +210,38 @@ class _CustomersScreenState extends State<CustomersScreen> {
         title: const Text('Edit Customer'),
         content: Form(
           key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Customer Name *',
-                  prefixIcon: Icon(Icons.person),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Customer Name *',
+                    prefixIcon: Icon(Icons.person),
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter customer name';
+                    }
+                    return null;
+                  },
+                  autofocus: true,
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter customer name';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: phoneController,
-                decoration: const InputDecoration(
-                  labelText: 'Phone Number (Optional)',
-                  prefixIcon: Icon(Icons.phone),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: phoneController,
+                  decoration: const InputDecoration(
+                    labelText: 'Phone Number (Optional)',
+                    prefixIcon: Icon(Icons.phone),
+                    border: OutlineInputBorder(),
+                    hintText: 'e.g., +1234567890',
+                  ),
+                  keyboardType: TextInputType.phone,
                 ),
-                keyboardType: TextInputType.phone,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         actions: [
@@ -179,70 +249,44 @@ class _CustomersScreenState extends State<CustomersScreen> {
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
-          ElevatedButton(
+          TextButton(
             onPressed: () async {
               if (formKey.currentState!.validate()) {
-                try {
-                  final updatedCustomer = customer.copyWith(
-                    name: nameController.text.trim(),
-                    phone: phoneController.text.trim().isEmpty 
-                        ? null 
-                        : phoneController.text.trim(),
-                    updatedAt: DateTime.now(),
-                  );
-                  
-                  await _storageService.updateCustomer(updatedCustomer);
-                  Navigator.pop(context);
-                  _loadCustomers();
-                  
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Customer updated successfully!')),
-                  );
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error updating customer: $e')),
-                  );
-                }
+                final updatedCustomer = customer.copyWith(
+                  name: nameController.text.trim(),
+                  phone: phoneController.text.trim().isEmpty 
+                      ? null 
+                      : phoneController.text.trim(),
+                  updatedAt: DateTime.now(),
+                );
+                await _updateCustomer(updatedCustomer);
               }
             },
-            child: const Text('Update'),
+            child: const Text('Save'),
           ),
         ],
       ),
     );
   }
 
-  void _showDeleteConfirmation(Customer customer) {
+  void _showDeleteConfirmationDialog(Customer customer) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Customer'),
-        content: Text('Are you sure you want to delete ${customer.name}?'),
+        content: Text('Are you sure you want to delete ${customer.name}? This action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
-          ElevatedButton(
+          TextButton(
             onPressed: () async {
-              try {
-                await _storageService.deleteCustomer(customer.id!);
-                Navigator.pop(context);
-                _loadCustomers();
-                
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Customer deleted successfully!')),
-                );
-              } catch (e) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error deleting customer: $e')),
-                );
-              }
+              Navigator.pop(context); // Close dialog
+              await _deleteCustomer(customer.id!);
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
             ),
             child: const Text('Delete'),
           ),
@@ -251,98 +295,114 @@ class _CustomersScreenState extends State<CustomersScreen> {
     );
   }
 
-  void _showCustomerHistory(Customer customer) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('${customer.name} - Visit History'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildCustomerList() {
+    if (_filteredCustomers.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Total Visits: ${customer.visits}'),
-            const SizedBox(height: 8),
-            Text('Phone: ${customer.phone ?? 'Not provided'}'),
-            const SizedBox(height: 8),
-            Text('Customer since: ${customer.createdAt?.toString().split(' ')[0] ?? 'Unknown'}'),
+            const Icon(
+              Icons.people_outline,
+              size: 64,
+              color: Colors.grey,
+            ),
             const SizedBox(height: 16),
-            const Text(
-              'Visit history tracking will be enhanced in future updates with detailed appointment records.',
-              style: TextStyle(
-                fontStyle: FontStyle.italic,
-                color: Colors.grey,
-              ),
+            Text(
+              'No customers found',
+              style: Theme.of(context).textTheme.titleMedium,
             ),
+            const SizedBox(height: 8),
+            const Text('Tap + to add a new customer'),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
+      );
+    }
 
-  Widget _buildCustomerCard(Customer customer) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-          child: Text(
-            customer.name.isNotEmpty ? customer.name[0].toUpperCase() : '?',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.bold,
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: 'Search customers...',
+              prefixIcon: const Icon(Icons.search),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
+              ),
+              filled: true,
+              fillColor: Theme.of(context).cardColor,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                        _filterCustomers('');
+                      },
+                    )
+                  : null,
+            ),
+            onChanged: _filterCustomers,
+          ),
+        ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: _loadCustomers,
+            child: ListView.builder(
+              padding: const EdgeInsets.only(bottom: 16),
+              itemCount: _filteredCustomers.length,
+              itemBuilder: (context, index) {
+                final customer = _filteredCustomers[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: Theme.of(context).primaryColor.withOpacity(0.2),
+                      child: Text(
+                        customer.name.isNotEmpty 
+                            ? customer.name[0].toUpperCase() 
+                            : '?',
+                        style: TextStyle(
+                          color: Theme.of(context).primaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    title: Text(
+                      customer.name,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                    subtitle: customer.phone != null
+                        ? Text(customer.phone!)
+                        : const Text('No phone number'),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit, size: 20),
+                          onPressed: () => _showEditCustomerDialog(customer),
+                          tooltip: 'Edit customer',
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, size: 20),
+                          onPressed: () => _showDeleteConfirmationDialog(customer),
+                          tooltip: 'Delete customer',
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ],
+                    ),
+                    onTap: () {
+                      // TODO: Navigate to customer details screen
+                    },
+                  ),
+                );
+              },
             ),
           ),
         ),
-        title: Text(
-          customer.name,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (customer.phone != null) Text('Phone: ${customer.phone}'),
-            Text('Visits: ${customer.visits}'),
-          ],
-        ),
-        trailing: PopupMenuButton<String>(
-          onSelected: (value) {
-            switch (value) {
-              case 'edit':
-                _showEditCustomerDialog(customer);
-                break;
-              case 'delete':
-                _showDeleteConfirmation(customer);
-                break;
-            }
-          },
-          itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: 'edit',
-              child: ListTile(
-                leading: Icon(Icons.edit),
-                title: Text('Edit'),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'delete',
-              child: ListTile(
-                leading: Icon(Icons.delete, color: Colors.red),
-                title: Text('Delete'),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-          ],
-        ),
-        onLongPress: () => _showCustomerHistory(customer),
-        onTap: () => _showCustomerHistory(customer),
-      ),
+      ],
     );
   }
 
@@ -356,28 +416,18 @@ class _CustomersScreenState extends State<CustomersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Customer Management'),
+        title: const Text('Customers'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadCustomers,
+            tooltip: 'Refresh',
           ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Search Bar
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search customers by name or phone...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: _showAddCustomerDialog,
+            tooltip: 'Add Customer',
+          ),
                           _searchController.clear();
                           _filterCustomers('');
                         },

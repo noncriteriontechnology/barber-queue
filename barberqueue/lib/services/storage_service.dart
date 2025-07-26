@@ -237,6 +237,17 @@ class StorageService {
     return 0;
   }
 
+  Future<int> updateAppointmentStatus(int id, String status) async {
+    await initialize();
+    final index = _appointments.indexWhere((a) => a.id == id);
+    if (index != -1) {
+      final appointment = _appointments[index];
+      _appointments[index] = appointment.copyWith(status: status);
+      return 1;
+    }
+    return 0;
+  }
+
   // User operations
   Future<List<User>> getUsers() async {
     await initialize();
